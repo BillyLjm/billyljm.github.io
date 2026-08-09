@@ -1,0 +1,62 @@
+---
+layout: landing
+---
+{% include site-menu.html %}
+
+<div class="canvas-stage">
+  <canvas
+    id="landing-canvas"
+    role="img"
+    aria-label="Interactive full-screen board of site thumbnails. Drag to rearrange. Click a thumbnail to open that site."
+  ></canvas>
+  <p id="canvas-status" class="canvas-status visually-hidden" aria-live="polite"></p>
+</div>
+
+<!-- Outside .canvas-stage so the full-screen canvas cannot steal hits. -->
+<label class="effect-picker">
+  <span class="visually-hidden">Canvas effect</span>
+  <select id="effect-picker" aria-label="Canvas effect"></select>
+</label>
+
+{% comment %}
+  Get thumbnail image of each mini site. Used by `_includes/
+{% endcomment %}
+<script id="sites-data" type="application/json">
+[
+{% for item in mini_sites %}
+  {% assign slug = item.path | split: "/" | first %}
+  {% include site-thumbnail-url.html slug=slug %}
+  {
+    "title": {{ item.title | jsonify }},
+    "slug": {{ slug | jsonify }},
+    "description": {{ item.description | jsonify }},
+    "status": {{ item.status | default: "Site" | jsonify }},
+    "accent": {{ item.accent | default: "#2563eb" | jsonify }},
+    "thumbnail": {{ thumbnail_url | relative_url | jsonify }},
+    "url": {{ item.url | relative_url | jsonify }}
+  }{% unless forloop.last %},{% endunless %}
+{% endfor %}
+]
+</script>
+
+{% comment %}
+  Raw file list for assets/js/effects/*.js (basenames only).
+  Subsequently used by assets/js/effects/_index.js
+{% endcomment %}
+<script id="effects-manifest" type="application/json">
+[
+{%- assign effect_ids = "" | split: "," -%}
+{%- for f in site.static_files -%}
+  {%- if f.extname == ".js" -%}
+    {%- if f.path contains "/assets/js/effects/" -%}
+      {%- assign effect_ids = effect_ids | push: f.basename -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- assign effect_ids = effect_ids | uniq | sort -%}
+{%- for id in effect_ids -%}
+  {{ id | jsonify }}{%- unless forloop.last -%},{%- endunless -%}
+{%- endfor -%}
+]
+</script>
+<script type="module" src="{{ "/assets/js/canvas.js" | relative_url }}"></script>

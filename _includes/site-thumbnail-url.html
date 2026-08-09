@@ -1,0 +1,25 @@
+{% comment %}
+  Resolve a mini-site card thumbnail URL into `thumbnail_url` (parent scope).
+
+  Params:
+    slug — mini-site folder name
+
+  Logic:
+    1. assets/sites/<slug>.{png,jpg,jpeg,webp,gif} if present
+    2. /assets/sites/default.png otherwise
+{% endcomment %}
+{% assign thumbnail_url = nil %}
+{% for f in site.static_files %}
+  {% if f.path contains "/assets/sites/" %}
+    {% if f.basename == include.slug %}
+      {% assign ext = f.extname | downcase %}
+      {% if ext == ".png" or ext == ".jpg" or ext == ".jpeg" or ext == ".webp" or ext == ".gif" %}
+        {% assign thumbnail_url = f.path %}
+        {% break %}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+{% if thumbnail_url == nil or thumbnail_url == "" %}
+  {% assign thumbnail_url = "/assets/sites/default.png" %}
+{% endif %}

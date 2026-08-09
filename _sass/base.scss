@@ -1,0 +1,527 @@
+// Theme tokens as CSS custom properties (toggled via html[data-theme]).
+:root {
+  color-scheme: light;
+
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --text: #12141a;
+  --muted: #5b6170;
+  --border: #e4e7ee;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+
+  --menu-surface: rgba(255, 255, 255, 0.96);
+  --menu-shadow: rgba(15, 23, 42, 0.1);
+  --backdrop: rgba(15, 23, 42, 0.28);
+
+  // Landing canvas (read from JS via getComputedStyle)
+  --canvas-bg-0: #eef2ff;
+  --canvas-bg-1: #f7f8fa;
+  --canvas-bg-2: #ecfeff;
+  --canvas-dot: rgba(37, 99, 235, 0.05);
+  --greeting-text: rgba(15, 23, 42, 0.86);
+  --greeting-sub: rgba(91, 97, 112, 0.85);
+  --greeting-glow-0: rgba(99, 102, 241, 0.12);
+  --greeting-glow-1: rgba(59, 130, 246, 0.05);
+  --greeting-caret: rgba(37, 99, 235, 0.85);
+  --greeting-bar: 37, 99, 235;
+
+  --picker-fg: rgba(15, 23, 42, 0.55);
+  --picker-fg-hover: rgba(15, 23, 42, 0.8);
+  --picker-bg: rgba(255, 255, 255, 0.55);
+  --picker-bg-hover: rgba(255, 255, 255, 0.78);
+  --picker-border: rgba(15, 23, 42, 0.08);
+  --picker-border-hover: rgba(15, 23, 42, 0.12);
+  --picker-chevron: rgba(15, 23, 42, 0.35);
+}
+
+// Dark theme: neutral zinc grays (no blue undertone on surfaces).
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0c0c0e;
+  --surface: #161618;
+  --text: #ececef;
+  --muted: #9b9ba3;
+  --border: #2a2a2e;
+  --accent: #d4d4d8;
+  --accent-hover: #f4f4f5;
+  --accent-soft: rgba(255, 255, 255, 0.08);
+
+  --menu-surface: rgba(22, 22, 24, 0.96);
+  --menu-shadow: rgba(0, 0, 0, 0.45);
+  --backdrop: rgba(0, 0, 0, 0.55);
+
+  --canvas-bg-0: #0c0c0e;
+  --canvas-bg-1: #121214;
+  --canvas-bg-2: #0e0e10;
+  --canvas-dot: rgba(255, 255, 255, 0.05);
+  --greeting-text: rgba(236, 236, 239, 0.92);
+  --greeting-sub: rgba(155, 155, 163, 0.9);
+  --greeting-glow-0: rgba(255, 255, 255, 0.07);
+  --greeting-glow-1: rgba(255, 255, 255, 0.03);
+  --greeting-caret: rgba(228, 228, 231, 0.9);
+  --greeting-bar: 228, 228, 231;
+
+  --picker-fg: rgba(236, 236, 239, 0.55);
+  --picker-fg-hover: rgba(236, 236, 239, 0.88);
+  --picker-bg: rgba(22, 22, 24, 0.7);
+  --picker-bg-hover: rgba(28, 28, 30, 0.9);
+  --picker-border: rgba(255, 255, 255, 0.1);
+  --picker-border-hover: rgba(255, 255, 255, 0.16);
+  --picker-chevron: rgba(255, 255, 255, 0.4);
+}
+
+$body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif,
+  "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+$max-width: 960px;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: $body-font;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+.container {
+  width: calc(100% - 2rem); 
+  max-widht: $max-width;
+  margin-inline: auto;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+// —— Shared shell (menu drawer locks scroll when open) ——
+body.menu-open {
+  overflow: hidden;
+}
+
+// —— Immersive full-screen landing ——
+body.immersive {
+  overflow: hidden;
+  background: var(--canvas-bg-0);
+}
+
+.canvas-stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background: var(--canvas-bg-0);
+}
+
+#landing-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: default;
+}
+
+#landing-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+// Quiet effect switcher — native <select>, fixed top-right (outside .canvas-stage).
+.effect-picker {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 25; // above canvas stage; below site menu (30+)
+  margin: 0;
+  pointer-events: auto;
+
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    font: 11px/1.2 system-ui, -apple-system, sans-serif;
+    letter-spacing: 0.02em;
+    color: var(--picker-fg);
+    background-color: var(--picker-bg);
+    background-image: linear-gradient(45deg, transparent 50%, var(--picker-chevron) 50%),
+      linear-gradient(135deg, var(--picker-chevron) 50%, transparent 50%);
+    background-position: calc(100% - 11px) 55%, calc(100% - 7px) 55%;
+    background-size: 4px 4px, 4px 4px;
+    background-repeat: no-repeat;
+    border: 1px solid var(--picker-border);
+    border-radius: 4px;
+    padding: 5px 22px 5px 8px;
+    min-width: 5.5rem;
+    max-width: 10rem;
+    cursor: pointer;
+    box-shadow: none;
+    outline: none;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--picker-fg-hover);
+      background-color: var(--picker-bg-hover);
+      border-color: var(--picker-border-hover);
+    }
+
+    &:focus-visible {
+      outline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Menu drawer with edge tab attached to the panel's right.
+// Collapsed: only the tab stays flush with the left viewport edge.
+// Open: panel slides in; tab rides along on the panel's right.
+// $menu-pad + $menu-tab-size define a shared header row so the site title
+// lines up with the tab icon, and list text shares the same horizontal inset.
+$menu-tab-size: 48px;
+$menu-pad: 16px;
+$menu-panel-width: min(320px, 100vw - #{$menu-tab-size});
+$menu-duration: 0.22s;
+
+.site-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--backdrop);
+  opacity: 0;
+  transition: opacity $menu-duration ease;
+}
+
+.site-menu-backdrop.is-open {
+  opacity: 1;
+}
+
+.site-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 35;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  // Closed: shift left so only the tab width remains on-screen (flush left).
+  transform: translateX(calc(-100% + #{$menu-tab-size}));
+  transition: transform $menu-duration ease;
+  // Tab stays clickable while collapsed; panel is off-screen.
+  pointer-events: none;
+}
+
+.site-menu.is-open {
+  transform: translateX(0);
+}
+
+.site-menu .menu-toggle {
+  pointer-events: auto;
+}
+
+.site-menu.is-open .site-menu-panel {
+  pointer-events: auto;
+}
+
+.site-menu-panel {
+  box-sizing: border-box;
+  width: $menu-panel-width;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  // Top pad matches the tab's offset; side pad is the shared content inset.
+  padding: $menu-pad $menu-pad 1.25rem;
+  background: var(--menu-surface);
+  backdrop-filter: blur(16px);
+  border-right: 1px solid var(--border);
+  box-shadow: 12px 0 40px var(--menu-shadow);
+}
+
+// Edge tab — same top offset + height as the title row.
+.menu-toggle {
+  flex: 0 0 $menu-tab-size;
+  width: $menu-tab-size;
+  height: $menu-tab-size;
+  margin-top: $menu-pad;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-left: 0;
+  border-radius: 0 14px 14px 0;
+  background: var(--menu-surface);
+  backdrop-filter: blur(16px);
+  box-shadow: 4px 4px 16px var(--menu-shadow);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background $menu-duration ease;
+}
+
+.menu-toggle:hover {
+  background: var(--surface);
+}
+
+.menu-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.menu-toggle-bars {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 18px;
+}
+
+.menu-toggle-bars span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--text);
+  transition: transform $menu-duration ease, opacity $menu-duration ease;
+  transform-origin: center;
+}
+
+// ☰ → ✕ in sync with the drawer
+.menu-toggle.is-open .menu-toggle-bars span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.menu-toggle.is-open .menu-toggle-bars span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.is-open .menu-toggle-bars span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+// Shared horizontal inset for title + nav text.
+$menu-item-inset: 0.75rem;
+
+// Title row: exact same band as the tab (pad top + 48px tall).
+.site-menu-header {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  flex: 0 0 $menu-tab-size;
+  height: $menu-tab-size;
+  margin: 0;
+  padding: 0 $menu-item-inset;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-logo {
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.site-menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: $menu-pad 0 0;
+  flex: 1;
+  overflow: auto;
+}
+
+.site-menu-nav a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  // Inset matches the site title; active accent bar sits in this gutter.
+  padding: 0.75rem $menu-item-inset;
+  border-radius: 12px;
+  color: inherit;
+}
+
+.site-menu-nav a:hover {
+  background: var(--bg);
+  color: inherit;
+}
+
+.site-menu-nav a[aria-current="page"] {
+  background: var(--accent-soft);
+}
+
+.site-menu-title {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.site-menu-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+// Theme switcher — footer of the drawer panel.
+.theme-switcher {
+  flex: 0 0 auto;
+  margin-top: auto;
+  padding: $menu-pad $menu-item-inset 0;
+  border-top: 1px solid var(--border);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.7rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: var(--surface);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-toggle-icon {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.theme-toggle-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+// Show sun in dark mode (action: switch to light), moon in light mode.
+.theme-toggle-icon .icon-sun {
+  display: none;
+}
+
+html[data-theme="dark"] .theme-toggle-icon .icon-sun {
+  display: block;
+}
+
+html[data-theme="dark"] .theme-toggle-icon .icon-moon {
+  display: none;
+}
+
+.theme-toggle-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.theme-toggle-label {
+  line-height: 1.2;
+}
+
+.theme-toggle-hint {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+// —— Subpages (non-immersive) ——
+// Leave room for the edge tab at the top-left when the menu is collapsed.
+.site-page .page-main,
+.default-page .page-main {
+  padding-top: 5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.page-main {
+  padding: 3rem 0 4rem;
+}
+
+.prose h1 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+}
+
+.lead {
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 38rem;
+}
+
+.prose > p,
+.prose > ul,
+.prose > ol {
+  max-width: 40rem;
+}
+
+.prose ul,
+.prose ol {
+  color: var(--muted);
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 1.5rem 0 2rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.footer-inner p {
+  margin: 0;
+}

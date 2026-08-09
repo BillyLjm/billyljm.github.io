@@ -1,0 +1,20 @@
+# Site settings
+title: "Billy.Ljm"
+description: "Under Construction"
+url: "https://billyljm.github.io/"
+baseurl: ""
+lang: en-US
+
+# Build settings
+markdown: kramdown
+permalink: pretty
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - README.md
+  - AGENTS.md
+  - .gitignore

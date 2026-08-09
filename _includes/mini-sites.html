@@ -1,0 +1,19 @@
+{% comment %}
+  Mini-sites = top-level folders under the project root that have an index page.
+  e.g. coding/index.md, photography/index.html  → included
+       index.html, coding/projects/index.md     → excluded
+
+  Depth rule: path has exactly 2 segments: <folder>/<index>
+  Layout is intentionally ignored so each site can use its own layout.
+{% endcomment %}
+{% assign mini_sites = "" | split: "" %}
+{% for item in site.pages %}
+  {% assign segments = item.path | split: "/" %}
+  {% if segments.size == 2 %}
+    {% assign filename = segments | last %}
+    {% if filename == "index.md" or filename == "index.html" %}
+      {% assign mini_sites = mini_sites | push: item %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+{% assign mini_sites = mini_sites | sort: "order" %}
